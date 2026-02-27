@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String?
+  email        String?      @unique
+  image        String?
+  githubId     Int?         @unique
+  accessToken  String? // For Octokit calls
+  repositories Repository[]
+  createdAt    DateTime     @default(now())
+}
+
+model Repository {
+  id           String        @id @default(cuid())
+  githubId     Int           @unique
+  name         String
+  owner        String
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  pullRequests PullRequest[]
+}
+
+model PullRequest {
+  id         String     @id @default(cuid())
+  number     Int
+  title      String
+  htmlUrl    String
+  status     String // 'pending' | 'completed' | 'failed'
+  repoId     String
+  repository Repository @relation(fields: [repoId], references: [id])
+  issues     Issue[]
+  createdAt  DateTime   @default(now())
+}
+
+model Issue {
+  id            String      @id @default(cuid())
+  pullRequestId String
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+  type          String // 'security' | 'performance' | 'style'
+  severity      String // 'low' | 'medium' | 'high'
+  file          String
+  line          Int
+  message       String
+  suggestion    String      @db.Text
+}
